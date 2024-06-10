@@ -2,7 +2,7 @@ from Class.OptaPy_Class import Lesson, TimeTable
 from Class.LangChain_Class import generate_objects
 from optapy import constraint_provider, solver_manager_create
 from optapy.types import Joiners, HardSoftScore, SolverConfig, Duration
-from ipysheet import sheet, cell, row, column
+from ipysheet import sheet, cell
 from ipywidgets import Tab
 import random
 from datetime import datetime, date, timedelta
@@ -146,28 +146,15 @@ def solver(prompt):
     solution.set_student_group_and_teacher_list()
 
     cell_map = dict()
-
-    def on_best_solution_changed(best_solution):
-        global timetable
-        global solution
-        global cell_map
-        solution = best_solution
-        unassigned_lessons = []
-        clear_cell_set = set()
-        
-        for (table_name, table_map) in cell_map.items():
-            for (key, cell) in table_map.items():
-                clear_cell_set.add(cell)
             
-    def update_table(final_best_solution):
+    def update_table(final_best_solution, cell_map):
         global timetable
         global solution
-        global cell_map
         solution = final_best_solution
         unassigned_lessons = []
         clear_cell_set = set()
         
-        for (table_name, table_map) in cell_map.items():
+        for (_, table_map) in cell_map.items():
             for (key, cell) in table_map.items():
                 clear_cell_set.add(cell)
                 
@@ -175,7 +162,7 @@ def solver(prompt):
             if lesson.timeslot is None or lesson.room is None:
                 unassigned_lessons.append((lesson, clear_cell_set))
             else:
-                update_lesson_in_table(lesson, clear_cell_set)
+                update_lesson_in_table(lesson, clear_cell_set, cell_map)
                 
         for cell in clear_cell_set:
             cell.value = ""
@@ -184,8 +171,7 @@ def solver(prompt):
         for (table_name, table_map) in cell_map.items():
             for (key, cell) in table_map.items():
                 cell.send_state()
-    def update_lesson_in_table(lesson, clear_cell_set):
-        global cell_map
+    def update_lesson_in_table(lesson, clear_cell_set, cell_map):
         x = solution.timeslot_list.index(lesson.timeslot)
         room_column = solution.room_list.index(lesson.room)
         teacher_column = solution.teacher_list.index(lesson.teacher)
@@ -212,13 +198,10 @@ def solver(prompt):
         #student_group_cell.style["backgroundColor"] = color
         student_group_cell.send_state()
         
-    def create_table(table_name, solution, columns, name_map):
-        global cell_map
+    def create_table(table_name, solution, columns, name_map, cell_map):
         out = sheet(rows=len(solution.timeslot_list) + 1, columns=len(columns) + 1)
         header_color = "#22222222"
         cell(0, 0, read_only=True, background_color=header_color)
-        header_row = row(0, list(map(name_map, columns)), column_start=1, read_only=True, background_color=header_color)
-        timeslot_column = column(0, list(map(lambda timeslot: timeslot.day_of_week[0:3] + " " + str(timeslot.start_time)[0:5], solution.timeslot_list)), row_start=1, read_only=True, background_color=header_color)
 
         table_cells = dict()
         cell_map[table_name] = table_cells
@@ -257,16 +240,16 @@ def solver(prompt):
         return markdown
     solver_manager = solver_manager_create(solver_config)
 
-    by_room_table = create_table('room', solution, solution.room_list, lambda room: room.name)
-    by_teacher_table = create_table('teacher', solution, solution.teacher_list, lambda teacher: teacher)
+    by_room_table = create_table('room', solution, solution.room_list, lambda room: room.name, cell_map)
+    by_teacher_table = create_table('teacher', solution, solution.teacher_list, lambda teacher: teacher, cell_map)
     by_student_group_table = create_table('student_group', solution, solution.student_group_list,
-                                        lambda student_group: student_group)
+                                        lambda student_group: student_group, cell_map)
 
     #solver_manager.solveAndListen(0, lambda the_id: solution, on_best_solution_changed)
     solver_job = solver_manager.solve(0, solution)
     final_best_solution = solver_job.getFinalBestSolution()
 
-    update_table(final_best_solution)
+    update_table(final_best_solution, cell_map)
 
 
 
@@ -286,4 +269,5 @@ def solver(prompt):
     print(teacher_markdown)
     print("\n## By Student Group\n")
     print(student_group_markdown)
+    return room_markdown, teacher_markdown, student_group_markdown
 

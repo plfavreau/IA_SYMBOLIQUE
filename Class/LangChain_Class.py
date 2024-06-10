@@ -8,7 +8,6 @@ from datetime import datetime
 import requests
 import uuid
 
-
 URL = "https://www.pilou.org/ask/ai"
 AUTHORIZATION_TOKEN = "yR$4NJbjaVkiWdnsJS88mxYd4EqLnaW9XQU39FdD$fTbf*4g^nXK%6vRz9Sk"
 
@@ -55,7 +54,20 @@ class Lesson_List_Langchain(BaseModel):
 class Room_List_Langchain(BaseModel):
     rooms: list[Room_Langchain] = Field(description="List of rooms")
 
+class OptimizationRequest(BaseModel):
+    optimization_request: bool = Field(description="Check if the request is an optimization request")
+
 model = MistralCustom(URL, HEADERS)
+
+def check_optimization_request(query: str) -> bool:
+    parser = JsonOutputParser(pydantic_object=OptimizationRequest)
+    prompt = PromptTemplate(
+        template="Check if the request is an planning optimization request.\n{format_instructions}\n{query}\n",
+        input_variables=["query"],
+        partial_variables={"format_instructions": parser.get_format_instructions()},
+    )
+    chain = prompt | model | parser
+    return chain.invoke(query)['optimization_request']
 
 def setup_model():
     """
@@ -98,11 +110,13 @@ def generate_room(query: str):
     return chain.invoke(query)
 
 def generate_timeslot_from_json(json_data: dict) -> Timeslot:
+    start_time = datetime.strptime(json_data["start_time"], "%d/%m/%Y %H:%M").time()
+    end_time = datetime.strptime(json_data["end_time"], "%d/%m/%Y %H:%M").time()
     return Timeslot(
         id = str(uuid.uuid4()),
         day_of_week = json_data["day_of_week"],
-        start_time = json_data["start_time"],
-        end_time = json_data["end_time"]
+        start_time = start_time,
+        end_time = end_time
     )
         
 def generate_lesson_from_json(json_data: dict) -> Lesson:
@@ -125,7 +139,7 @@ def generate_objects(MAIN_QUERY: str) -> list:
     print("-- TIMESLOT -- ")
     query_timeslot = MAIN_QUERY
     date_of_today = datetime.now().strftime("%d/%m/%Y")
-    prompt_footer = f"\n--\nIf in the query above the day of the week is not specified, you can create any type of day of the week accordingly to date of today : {date_of_today}. If the start time and end time are not specified, you can create any type of time with the format DD/MM/YYYY HH:MM between 8:00 - 12:00 and 13:00 - 19:00."
+    prompt_footer = f"\n--\nIf in the query above the day of the week is not specified, you can create any type of day of the week accordingly to date of today : {date_of_today}. If the start time and end time are not specified, you can create any type of time with the format DD/MM/YYYY HH:MM between 8:00 - 12:00 and 13:00 - 19:00. Timeslots are 1 hour long each by default."
     query_timeslot = query_timeslot + prompt_footer
     timeslot_langchain = generate_timeslot(query=query_timeslot)
 
@@ -133,7 +147,7 @@ def generate_objects(MAIN_QUERY: str) -> list:
     first_key = next(iter(timeslot_langchain))
     for slot in timeslot_langchain[first_key]:
         timeSlotsList.append(generate_timeslot_from_json(slot))
-
+    print(timeslot_langchain)
     
     print("LESSON")
     prompt_footer = "\n--\nIf in the query above, you don't specify the teacher and the student group, you can create any type of teacher and student group."
@@ -147,7 +161,7 @@ def generate_objects(MAIN_QUERY: str) -> list:
 
     print(lesson_langchain)
     print("ROOM")
-    prompt_footer = "\n--\nIf in the query above, you don't specify the room, you can create any type of room with the name you want from 100 to 600."
+    prompt_footer = "\n--\nIf in the query above, you don't specify the room, you can create any type of room with the name you want from 100 to 600, only if needed."
     query_room = MAIN_QUERY + prompt_footer
     room_langchain = generate_room(query=query_room)
     print(room_langchain)

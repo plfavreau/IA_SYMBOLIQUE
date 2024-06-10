@@ -1,4 +1,5 @@
-from optapy import problem_fact, planning_id, planning_entity, planning_variable, planning_solution, problem_fact_collection_property, value_range_provider, planning_entity_collection_property, planning_score, HardSoftScore
+from optapy import problem_fact, planning_id, planning_entity, planning_variable, planning_solution, problem_fact_collection_property, value_range_provider, planning_entity_collection_property, planning_score
+from optapy.types import HardSoftScore
 
 @problem_fact
 class Room:

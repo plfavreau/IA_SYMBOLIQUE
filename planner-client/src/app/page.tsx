@@ -36,7 +36,7 @@ const planningExamples = [
   {
     emoji: '📚',
     description:
-      'In my school there are rooms 201, 202, 203. I have 3 lessons: Math, Physics, Chemistry. I have 3 timeslots: Monday 8:30-9:30, Monday 9:30-10:30, Monday 10:30-11:30. I want to assign Math to room 201, Physics to room 202, Chemistry to room 203.',
+      'In my school there are rooms 201, 202, 203. I have 3 lessons: Math, Physics, Chemistry. I have 3 timeslots: Monday 8:30-9:30, Monday 9:30-10:30, Monday 10:30-11:30.',
   },
   {
     emoji: '⏰',
@@ -46,13 +46,25 @@ const planningExamples = [
   {
     emoji: '🎓',
     description:
-      "J'ai 8 heures de cours de IA-Symbolique à planifier entre le lundi et le mercredi (8h-19h30).",
+      "J'ai 8 heures de cours de IA-Symbolique à planifier avec Jean-Sylvain Boige entre le lundi et le mercredi (8h-19h30).",
   },
   {
     emoji: '🍎',
     description: 'Tu peux me donner la recette de la tarte aux pommes ?',
   },
 ];
+
+type LLMError = {
+  error: string;
+};
+
+type LLMResponseOK = {
+  room_markdown: string,
+  teacher_markdown: string,
+  student_group_markdown: string,
+}
+
+type LLMResponse = LLMError & LLMResponseOK;
 
 export default function Home() {
   const textareaProps = useAutoGrowTextArea('');
@@ -63,17 +75,23 @@ export default function Home() {
     setLoading(true);
     setResponse('');
 
-    const llmResponse = await fetch('http://localhost:8000', {
+    const llmResponse = await fetch('http://127.0.0.1:8000', {
       method: 'POST',
       body: JSON.stringify({ text: textareaProps.value }),
       headers: {
         'Content-Type': 'application/json',
       },
-    }); // { code: "here is your problem" }
+    });
 
-    const llmResponseJson = await llmResponse.json();
+    const llmResponseJson: LLMResponse = await llmResponse.json();
+    console.log(JSON.stringify(llmResponseJson));
+    if (llmResponseJson.error) {
+      setResponse("Planning solver failed : " + llmResponseJson.error);
+      setLoading(false);
+      return;
+    }
+    setResponse(`Per room : \n${llmResponseJson.room_markdown} \n\nPer teacher : \n${llmResponseJson.teacher_markdown} \n\nPer student group : \n${llmResponseJson.student_group_markdown}`);
     setLoading(false);
-    setResponse(llmResponseJson.code);
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -131,7 +149,9 @@ export default function Home() {
                 exit={{ opacity: 0, y: 20 }}
                 className='text-gray-800 mt-2'
               >
-                {response}
+                <Textarea className='w-[1024px] h-[512px] resize-none'>
+                  {response}
+                </Textarea>
               </motion.div>
             )}
           </AnimatePresence>
