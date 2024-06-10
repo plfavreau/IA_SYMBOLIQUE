@@ -3,11 +3,10 @@
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowUp, Loader2 } from 'lucide-react';
-import { Inter } from 'next/font/google';
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import TimeTableView from '@/components/TimeTableView';
 
-const inter = Inter({ subsets: ['latin'] });
 
 function useAutoGrowTextArea(initialValue: string) {
   const [value, setValue] = useState(initialValue);
@@ -59,9 +58,9 @@ type LLMError = {
 };
 
 type LLMResponseOK = {
-  room_markdown: string,
-  teacher_markdown: string,
-  student_group_markdown: string,
+  roomObject: any,
+  teacherObject: any,
+  studentGroupObject: any,
 }
 
 type LLMResponse = LLMError & LLMResponseOK;
@@ -69,29 +68,35 @@ type LLMResponse = LLMError & LLMResponseOK;
 export default function Home() {
   const textareaProps = useAutoGrowTextArea('');
   const [loading, setLoading] = useState(false);
-  const [response, setResponse] = useState('');
+  const [reponseError, setResponseError] = useState('');
+  const [responseOk, setResponseOk] = useState();
 
   const handleSend = async () => {
     setLoading(true);
-    setResponse('');
+    setResponseError('');
 
-    const llmResponse = await fetch('http://127.0.0.1:8000', {
-      method: 'POST',
-      body: JSON.stringify({ text: textareaProps.value }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    const llmResponseJson: LLMResponse = await llmResponse.json();
-    console.log(JSON.stringify(llmResponseJson));
-    if (llmResponseJson.error) {
-      setResponse("Planning solver failed : " + llmResponseJson.error);
+    try {
+      const llmResponse = await fetch('http://127.0.0.1:8000', {
+        method: 'POST',
+        body: JSON.stringify({ text: textareaProps.value }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      const llmResponseJson = await llmResponse.json();
+      if (llmResponseJson.error) {
+        setResponseError("Planning solver failed : " + llmResponseJson.error);
+        setLoading(false);
+        return;
+      }
+      setResponseOk(llmResponseJson);
+      setLoading(false);
+      
+    } catch (error) {
+      setResponseError("Planning solver failed : " + error);
       setLoading(false);
       return;
     }
-    setResponse(`Per room : \n${llmResponseJson.room_markdown} \n\nPer teacher : \n${llmResponseJson.teacher_markdown} \n\nPer student group : \n${llmResponseJson.student_group_markdown}`);
-    setLoading(false);
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -126,7 +131,6 @@ export default function Home() {
                 key={index}
                 onClick={() => {
                   textareaProps.setValue(example.description);
-                  console.log('clicked');
                 }}
                 className='flex flex-col space-y-2 border border-gray-300/60 hover:bg-slate-50/80 rounded-xl p-4 w-1/5 shadow-sm'
               >
@@ -142,16 +146,28 @@ export default function Home() {
             ))}
           </div>
           <AnimatePresence>
-            {response && (
+            {loading && (
+              <div className='flex space-x-2 justify-center items-center bg-white h-4 animate-pulse'>
+                <span className='sr-only'>Loading...</span>
+                  <div className='h-4 w-4 bg-black/20 rounded-full animate-bounce [animation-delay:-0.3s]'></div>
+                <div className='h-4 w-4 bg-black/20 rounded-full animate-bounce [animation-delay:-0.15s]'></div>
+                <div className='h-4 w-4 bg-black/20 rounded-full animate-bounce'></div>
+              </div>
+            )}
+            {!loading && (reponseError || responseOk) && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                className='text-gray-800 mt-2'
-              >
-                <Textarea className='w-[1024px] h-[512px] resize-none'>
-                  {response}
-                </Textarea>
+                className={`text-gray-800 mt-2 ${loading && 'animate-pulse'}`}
+              > 
+              {reponseError ? 
+                <div className='flex justify-center items-center h-12 w-1/8 text-red-500'>
+                  {reponseError}
+                </div>
+              : 
+              <TimeTableView timetable={responseOk} />
+              }
               </motion.div>
             )}
           </AnimatePresence>

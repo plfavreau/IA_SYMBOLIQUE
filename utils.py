@@ -5,6 +5,7 @@ from optapy.types import Joiners, HardSoftScore, SolverConfig, Duration
 from ipysheet import sheet, cell
 from ipywidgets import Tab
 import random
+
 from datetime import datetime, date, timedelta
 
 # Trick since timedelta only works with datetime instances
@@ -238,6 +239,21 @@ def solver(prompt):
             markdown += "| " + " | ".join(row_values) + " |\n"
         
         return markdown
+    
+    def table_to_json(table_cells, headers, timeslots):
+        data = []
+        for x in range(1, len(timeslots) + 1):
+            row = {}
+            row[headers[0]] = timeslots[x - 1].day_of_week[0:3] + " " + str(timeslots[x - 1].start_time)[0:5]
+            for y in range(1, len(headers)):
+                cell_value = table_cells.get((x, y), "")
+                if cell_value:
+                    row[headers[y]] = cell_value.value.replace('\n', ', ')
+                else:
+                    row[headers[y]] = ""
+            data.append(row)
+        return data
+
     solver_manager = solver_manager_create(solver_config)
 
     by_room_table = create_table('room', solution, solution.room_list, lambda room: room.name, cell_map)
@@ -263,11 +279,21 @@ def solver(prompt):
     teacher_markdown = table_to_markdown(cell_map['teacher'], ['Timeslot'] + solution.teacher_list, solution.timeslot_list)
     student_group_markdown = table_to_markdown(cell_map['student_group'], ['Timeslot'] + solution.student_group_list, solution.timeslot_list)
 
+    room_json = table_to_json(cell_map['room'], ['Timeslot'] + [room.name for room in solution.room_list], solution.timeslot_list)
+    teacher_json = table_to_json(cell_map['teacher'], ['Timeslot'] + solution.teacher_list, solution.timeslot_list)
+    student_group_json = table_to_json(cell_map['student_group'], ['Timeslot'] + solution.student_group_list, solution.timeslot_list)
+
     print("## By Room\n")
     print(room_markdown)
     print("\n## By Teacher\n")
     print(teacher_markdown)
     print("\n## By Student Group\n")
     print(student_group_markdown)
-    return room_markdown, teacher_markdown, student_group_markdown
+    result = {
+        "byRoom": room_json,
+        "byTeacher": teacher_json,
+        "byStudentGroup": student_group_json
+    }
+    return result
+    # return room_markdown, teacher_markdown, student_group_markdown
 

@@ -1,5 +1,6 @@
 
 import os
+
 java_home = os.environ.get('JAVA_HOME', None)
 if not java_home:
     java_path = 'C:\\Program Files\\OpenLogic\\jdk-11.0.22.7-hotspot\\bin'
@@ -11,10 +12,13 @@ else:
     print("ERROR")
     print(java_home)
 
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from utils import solver
-from Class.LangChain_Class import check_optimization_request
+from fastapi import FastAPI, Request  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from fastapi.responses import JSONResponse  # noqa: E402
+from Class.LangChain_Class import check_optimization_request  # noqa: E402
+from utils import solver  # noqa: E402
+
+
 
 app = FastAPI()
 
@@ -33,14 +37,13 @@ async def main(request: Request):
     problem = data.get("text")
 
     if not check_optimization_request(problem):
-        return {"error": "The provided request is not a planning optimization problem"}
+        return {"error": "The provided request is not a planning optimization problem."}
 
     answer = solver(problem)
     if not answer:
         return {"error": "No answer"}
     else:
-        room_markdown, teacher_markdown, student_group_markdown = answer
-        return {"room_markdown": room_markdown, "teacher_markdown": teacher_markdown, "student_group_markdown": student_group_markdown}
+        return JSONResponse(content=answer)
 
 
 if __name__ == "__main__":

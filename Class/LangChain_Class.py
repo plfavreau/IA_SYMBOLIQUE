@@ -62,7 +62,7 @@ model = MistralCustom(URL, HEADERS)
 def check_optimization_request(query: str) -> bool:
     parser = JsonOutputParser(pydantic_object=OptimizationRequest)
     prompt = PromptTemplate(
-        template="Check if the request is an planning optimization request.\n{format_instructions}\n{query}\n",
+        template="Check if the request is a planning optimization request.\n{format_instructions}\n{query}\n",
         input_variables=["query"],
         partial_variables={"format_instructions": parser.get_format_instructions()},
     )
