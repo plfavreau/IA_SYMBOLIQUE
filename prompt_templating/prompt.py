@@ -1,4 +1,3 @@
-import re
 import requests
 
 URL = "https://www.pilou.org/ask/ai"
@@ -111,7 +110,7 @@ class Lesson:
             f"student_group={self.student_group}"
             f")"
         )
-        
+
 from domain import Lesson, Room
 from optapy import constraint_provider, get_class
 from optapy.constraint import Joiners
@@ -217,7 +216,84 @@ class TimeTable:
             f"score={str(self.score.toString()) if self.score is not None else 'None'}"
             f")"
         )
-        
+
+from datetime import time
+
+def generate_problem():
+    timeslot_list = [
+        Timeslot(1, "MONDAY", time(hour=8, minute=30), time(hour=9, minute=30)),
+        Timeslot(2, "MONDAY", time(hour=9, minute=30), time(hour=10, minute=30)),
+        Timeslot(3, "MONDAY", time(hour=10, minute=30), time(hour=11, minute=30)),
+        Timeslot(4, "MONDAY", time(hour=13, minute=30), time(hour=14, minute=30)),
+        Timeslot(5, "MONDAY", time(hour=14, minute=30), time(hour=15, minute=30)),
+        Timeslot(6, "TUESDAY", time(hour=8, minute=30), time(hour=9, minute=30)),
+        Timeslot(7, "TUESDAY", time(hour=9, minute=30), time(hour=10, minute=30)),
+        Timeslot(8, "TUESDAY", time(hour=10, minute=30), time(hour=11, minute=30)),
+        Timeslot(9, "TUESDAY", time(hour=13, minute=30), time(hour=14, minute=30)),
+        Timeslot(10, "TUESDAY", time(hour=14, minute=30), time(hour=15, minute=30)),
+    ]
+    room_list = [
+        Room(1, "Room A"),
+        Room(2, "Room B"),
+        Room(3, "Room C")
+    ]
+    lesson_list = [
+        Lesson(1, "Math", "A. Turing", "9th grade"),
+        Lesson(2, "Math", "A. Turing", "9th grade"),
+        Lesson(3, "Physics", "M. Curie", "9th grade"),
+        Lesson(4, "Chemistry", "M. Curie", "9th grade"),
+        Lesson(5, "Biology", "C. Darwin", "9th grade"),
+        Lesson(6, "History", "I. Jones", "9th grade"),
+        Lesson(7, "English", "I. Jones", "9th grade"),
+        Lesson(8, "English", "I. Jones", "9th grade"),
+        Lesson(9, "Spanish", "P. Cruz", "9th grade"),
+        Lesson(10, "Spanish", "P. Cruz", "9th grade"),
+        Lesson(11, "Math", "A. Turing", "10th grade"),
+        Lesson(12, "Math", "A. Turing", "10th grade"),
+        Lesson(13, "Math", "A. Turing", "10th grade"),
+        Lesson(14, "Physics", "M. Curie", "10th grade"),
+        Lesson(15, "Chemistry", "M. Curie", "10th grade"),
+        Lesson(16, "French", "M. Curie", "10th grade"),
+        Lesson(17, "Geography", "C. Darwin", "10th grade"),
+        Lesson(18, "History", "I. Jones", "10th grade"),
+        Lesson(19, "English", "P. Cruz", "10th grade"),
+        Lesson(20, "Spanish", "P. Cruz", "10th grade"),
+    ]
+    lesson = lesson_list[0]
+    lesson.set_timeslot(timeslot_list[0])
+    lesson.set_room(room_list[0])
+
+    return TimeTable(timeslot_list, room_list, lesson_list)
+```
+'''
+
+prompt_template_2 = '''**Optimization Problem Description:**
+{DESCRIPTION}
+
+#SOME FUNDAMENTAL RULES
+When you answer, do not say hello, hi or any kind of greetings. Do not introduce yourself. Do not tell what task you are doing. Just be factual and nothing more.
+IMPORTANT: IF THE PROBLEM IS NOT AN OPTIMISATION PROBLEM, DO NOT GIVE AN ANSWER TO IT. JUST SAY "The provided request does not fit with a planning problem." AND NOTHING MORE
+IMPORTANT: IF THE PROBLEM IS AN OPTIMISATION PROBLEM, STRICTLY FOLLOW THE RESPONSE TEMPLATE GIVEN. DO NOT ADD ANYTHING MORE. RETURN ONLY THE generate_problem() FUNCTION
+
+### Problem Verification
+
+**Problem Identification:**
+   - Check if the given description corresponds to an optimization problem. If not, respond: "The provided request does not fit with a planning problem".
+   - If the optimization problem is incomplete, respond: "The described optimization problem needs further details to be solved: ..." and list the missing information.
+
+**Information Extraction:**
+   - If an optimization problem is identified, extract the following elements:
+     - **Decision Variables:** Identify the decision variables.
+     - **Objective Function:** Identify the objective function to be optimized.
+     - **Constraints:** Identify the constraints of the problem.
+     - **Data and Parameters:** Identify the necessary data and parameters.
+
+**OptaPy Source Code Generation:**
+   - Generate the generate_problem() function to solve the problem with OptaPy.
+
+### Example Response if the Problem is Complete:
+
+```python
 from datetime import time
 
 def generate_problem():
@@ -270,7 +346,7 @@ def generate_problem():
 
 
 def get_problem_code(problem):
-    prompt = prompt_template.replace("{DESCRIPTION}", problem)
+    prompt = prompt_template_2.replace("{DESCRIPTION}", problem)
 
     data = {
         "model": "mixtral",
@@ -280,13 +356,17 @@ def get_problem_code(problem):
     response = requests.post(url=URL, headers=HEADERS, json=data)
     message = response.json()['message']
 
-    start_pos = message.find("```python") + len("```python")
-    end_pos = message.find("```", start_pos)
+    # Good answer of an optimisation problem
+    if "```python" in message:
+        start_pos = message.find("```python") + len("```python")
+        end_pos = message.find("```", start_pos)
 
-    # Extract the code block
-    extracted_code = message[start_pos:end_pos].strip()
+        # Extract the code block
+        extracted_code = message[start_pos:end_pos].strip()
 
-    return extracted_code
+        return True, extracted_code
+
+    return False, message.split(".")[0]
 
 
 PROBLEM = '''We have two projects (P1 & P2) with dependent tasks and limited resources. 
@@ -296,5 +376,14 @@ Tasks:
 - P2: Task D (5 days, 3 developers), Task E (2 days, 2 developers, depends on D).
 Available resources: 3 developers.'''
 
-answer = get_problem_code(PROBLEM)
-print(answer)
+PROBLEM_2 = '''In my school there are rooms 201, 202, 203. 
+I have 3 lessons: Math, Physics, Chemistry. 
+I have 3 timeslots: Monday 8:30-9:30, Monday 9:30-10:30, Monday 10:30-11:30. 
+I want to assign Math to room 201, Physics to room 202, Chemistry to room 203.'''
+
+FALSE_PROBLEM = '''How many people were on the Titanic ?'''
+FALSE_PROBLEM_2 = '''Give me the recipe of the pudding'''
+FALSE_PROBLEM_3 = '''Tell me something funny'''
+
+answer = get_problem_code(FALSE_PROBLEM_3)
+print(answer[1])

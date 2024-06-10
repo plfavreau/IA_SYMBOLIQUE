@@ -59,13 +59,21 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState('');
 
-  const handleSend = () => {
+  const handleSend = async () => {
     setLoading(true);
     setResponse('');
-    setTimeout(() => {
-      setLoading(false);
-      setResponse('Here is your timetable :');
-    }, 1000);
+
+    const llmResponse = await fetch('http://localhost:8000', {
+      method: 'POST',
+      body: JSON.stringify({ text: textareaProps.value }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }); // { code: "here is your problem" }
+
+    const llmResponseJson = await llmResponse.json();
+    setLoading(false);
+    setResponse(llmResponseJson.code);
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
