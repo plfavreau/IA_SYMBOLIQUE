@@ -183,7 +183,7 @@ export default function Home() {
                 ref={textareaProps.ref}
                 value={textareaProps.value}
                 className='overflow-hidden resize-none rounded-2xl bg-gray-50 text-gray-500 shadow-sm'
-                placeholder='Type planning problem here !'
+                placeholder='Type your planning problem here !'
                 onChange={textareaProps.onChange}
               />
             </div>
