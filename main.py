@@ -1,34 +1,17 @@
-
-import os
-
-java_home = os.environ.get('JAVA_HOME', None)
-if not java_home:
-    java_path = 'C:\\Program Files\\OpenLogic\\jdk-11.0.22.7-hotspot\\bin'
-    java_path = 'G:\\Program Files\\Java\\jre1.8.0_261\\bin'
-    java_path = "C:\\Users\\Pilou\\.Neo4jDesktop\\distributions\\java\\zulu11.66.19-ca-jdk11.0.20.1\\bin"
-    os.environ['JAVA_HOME'] = java_path
-    print(java_path)
-else:
-    print("ERROR")
-    print(java_home)
-
 from fastapi import FastAPI, Request  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.responses import JSONResponse  # noqa: E402
 from Class.LangChain_Class import check_optimization_request  # noqa: E402
 from utils import solver  # noqa: E402
 
-
-
 app = FastAPI()
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.post("/")
@@ -48,6 +31,4 @@ async def main(request: Request):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
-    #MAIN_QUERY = "In my school there are rooms 201, 202, 203. I have 3 lessons: Math, Physics, Chemistry. I have 3 timeslots: Monday 8:30-9:30, Monday 9:30-10:30, Monday 10:30-11:30. I want to assign Math to room 201, Physics to room 202, Chemistry to room 203."
-    #solver(MAIN_QUERY)
+    uvicorn.run(app, host="0.0.0.0", port=8000)

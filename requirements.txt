@@ -1,6 +1,11 @@
+# Optaplanner dependencies
 optapy==9.37.0b0
 ipywidgets
 ipyleaflet
 ipysheet
+# API dependencies
 fastapi
 requests
+# Langchain dependencies
+langchain
+langchain_openai

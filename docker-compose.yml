@@ -1,0 +1,30 @@
+services:
+  python_server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    networks:
+      - my_network
+    environment:
+    - OPENAI_API_KEY=${OPENAI_API_KEY}
+
+  nextjs_app:
+    build:
+      context: ./planner-client
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./planner-client:/app
+    depends_on:
+      - python_server
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    driver: bridge

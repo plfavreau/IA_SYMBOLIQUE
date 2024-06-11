@@ -4,9 +4,9 @@ from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from Class.OptaPy_Class import Room, Timeslot, Lesson
 from datetime import datetime
-
 import requests
 import uuid
+import os
 
 URL = "https://www.pilou.org/ask/ai"
 AUTHORIZATION_TOKEN = "yR$4NJbjaVkiWdnsJS88mxYd4EqLnaW9XQU39FdD$fTbf*4g^nXK%6vRz9Sk"
@@ -73,8 +73,9 @@ def setup_model():
     """
     Setup the LLM model.
     """
+    openai_api_key = os.getenv('OPENAI_API_KEY')
     return ChatOpenAI(
-        model="gpt-4o-2024-05-13", temperature=0, api_key='sk-proj-HoooFFr01ckgehZEDfuaT3BlbkFJ6zxlrwFkfQuYRVYCOwRQ'
+        model="gpt-4o-2024-05-13", temperature=0, api_key=openai_api_key
     )
 
 model = setup_model()

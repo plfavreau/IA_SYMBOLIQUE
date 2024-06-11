@@ -76,7 +76,7 @@ export default function Home() {
     setResponseError('');
 
     try {
-      const llmResponse = await fetch('http://127.0.0.1:8000', {
+      const llmResponse = await fetch('http://localhost:8000/', {
         method: 'POST',
         body: JSON.stringify({ text: textareaProps.value }),
         headers: {
