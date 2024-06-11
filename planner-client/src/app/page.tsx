@@ -45,7 +45,7 @@ const planningExamples = [
   {
     emoji: '🎓',
     description:
-      "J'ai 8 heures de cours de IA-Symbolique à planifier avec Jean-Sylvain Boige entre le lundi et le mercredi (8h-19h30).",
+      "J'ai 15 heures de cours de IA-Symbolique à planifier avec Jean-Sylvain Boige entre le lundi et le mercredi (8h-19h30). Je ne suis pas disponible tous les jours entre 10h et 11h.",
   },
   {
     emoji: '🍎',
@@ -114,9 +114,9 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.2 }}
-            className='mb-3 text-3xl font-light text-gray-900'
+            className='text-4xl shadow-sm font-light text-gray-900 mt-64 mb-16'
           >
-            LLM Planner
+            ARNO PLANNER
           </motion.h2>
           <div className='flex flex-row justify-evenly py-8'>
             {planningExamples.map((example, index) => (
