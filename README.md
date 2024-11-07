@@ -1,6 +1,6 @@
 # ARNO Planner - AI-Powered Scheduling Solution
 
-ARNO Planner is a sophisticated scheduling and timetabling application that leverages artificial intelligence to solve complex planning problems. It provides an intuitive interface for managing educational and organizational scheduling needs.
+ARNO Planner is a sophisticated scheduling and timetabling application that combines the power of AI-driven natural language understanding through LangChain and OpenAI with the mathematical certainty of constraint solvers. By leveraging both probabilistic AI and deterministic optimization algorithms, it delivers reliable and optimal solutions for complex planning problems. The application provides an intuitive interface for managing educational and organizational scheduling needs, transforming natural language requests into mathematically proven scheduling solutions.
 
 ## 🚀 Key Features
 
